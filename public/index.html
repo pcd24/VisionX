@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionX - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <img src="pic1.png" alt="VisionX Logo" class="logo-image">
+        <a href="home.html">VisionX</a>
+        <a href="tryitout.html">Try it Out</a>
+        <a href="#" class="logout">Logout</a>
+    </nav>
+    <div class="auth-container">
+        <svg class="container-outline-path" width="100%" height="100%">
+            <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+        </svg>
+        <h2>Login to VisionX</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <div class="input-wrapper">
+                    <input type="email" id="email" name="email" required>
+                    <svg class="outline-path" width="100%" height="100%">
+                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                    </svg>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" required>
+                    <svg class="outline-path" width="100%" height="100%">
+                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                    </svg>
+                </div>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="register.html">Register here</a></p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        // Animation for input fields
+        document.querySelectorAll('.input-wrapper').forEach(wrapper => {
+            const input = wrapper.querySelector('input');
+            const path = wrapper.querySelector('.outline-path rect');
+            const pathLength = path.getTotalLength();
+            path.setAttribute('stroke-dasharray', `${pathLength}, ${pathLength}`);
+            path.setAttribute('stroke-dashoffset', pathLength);
+
+            input.addEventListener('mouseenter', () => {
+                gsap.to(path, {
+                    strokeDashoffset: 0,
+                    duration: 2,
+                    ease: "power3.out"
+                });
+            });
+            input.addEventListener('mouseleave', () => {
+                gsap.to(path, {
+                    strokeDashoffset: pathLength,
+                    duration: 0.8,
+                    ease: "power3.out"
+                });
+            });
+        });
+
+        // Animation for the auth-container
+        const authContainer = document.querySelector('.auth-container');
+        const containerPath = document.querySelector('.container-outline-path rect');
+        const containerPathLength = containerPath.getTotalLength();
+        containerPath.setAttribute('stroke-dasharray', `${containerPathLength}, ${containerPathLength}`);
+        containerPath.setAttribute('stroke-dashoffset', containerPathLength);
+
+        authContainer.addEventListener('mouseenter', () => {
+            gsap.to(containerPath, {
+                strokeDashoffset: 0,
+                duration: 2,
+                ease: "power3.out"
+            });
+        });
+        authContainer.addEventListener('mouseleave', () => {
+            gsap.to(containerPath, {
+                strokeDashoffset: containerPathLength,
+                duration: 0.8,
+                ease: "power3.out"
+            });
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('http://localhost:3000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                window.location.href = 'home.html';
+            } else {
+                alert(data.message);
+            }
+        });
+    </script>
+</body>
+</html>

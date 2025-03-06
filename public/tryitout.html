@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionX - Try It Out</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <img src="pic1.png" alt="VisionX Logo" class="logo-image">
+        <a href="home.html">VisionX</a>
+        <a href="tryitout.html">Try it Out</a>
+        <a href="chatbot.html">X-bot</a>
+        <a href="#" class="logout">Logout</a>
+    </nav>
+
+    <div class="tryitout-container">
+        <svg class="container-outline-path">
+            <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+        </svg>
+        <h1 class="section-title">Try VisionX</h1>
+        <p class="section-subtitle">Transform your ideas into stunning videos instantly!</p>
+
+        <div class="input-section">
+            <label for="video-input">Enter your video idea:</label>
+            <div class="input-wrapper">
+                <input type="text" id="video-input" placeholder="e.g., Sunset Beach" required>
+                <svg class="outline-path">
+                    <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                </svg>
+            </div>
+            <div class="button-group">
+                <button id="fetch-video-btn">Fetch Video</button>
+                <button id="clear-btn" class="small-btn">Clear</button>
+            </div>
+        </div>
+
+        <div class="video-section" style="display: none;">
+            <h2>Generated Video</h2>
+            <video id="generated-video" controls style="max-width: 100%;"></video>
+            <a id="download-video" href="#" download>Download Video</a>
+        </div>
+
+        <div class="info-section">
+            <h2 class="info-title">About VisionX</h2>
+            <p class="info-description">VisionX is a revolutionary tool that transforms your text ideas into stunning motion videos. Powered by advanced AI and integrated with Pexels and Hugging Face APIs, VisionX allows you to create and download videos in just a few clicks.</p>
+            <h3 class="feature-title">Features</h3>
+            <ul class="feature-list">
+                <li>Generate videos from text prompts using Pexels API.</li>
+                <li>Download your generated videos effortlessly.</li>
+                <li>Seamless user experience with a sleek, animated interface.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to access this page.');
+            window.location.href = 'index.html';
+        }
+
+        // GSAP Animations with Slide Effects
+        const tl = gsap.timeline();
+        tl.from(".section-title", { x: "-100%", opacity: 0, duration: 1.2, ease: "power3.out" })
+          .from(".section-subtitle", { y: 20, opacity: 0, duration: 0.8, ease: "power2.out" }, "-=0.5")
+          .from(".input-section", { scale: 0.8, opacity: 0, duration: 1, ease: "elastic.out(1, 0.5)" }, "-=0.5")
+          .from(".info-section", { y: 50, opacity: 0, duration: 1, ease: "power2.out" }, "-=0.5");
+
+        // Slide-in animation for info section
+        const infoTl = gsap.timeline({ delay: 0.5 });
+        infoTl.from(".info-title", { x: "100%", opacity: 0, duration: 1.2, ease: "power3.out" })
+              .from(".info-description", { x: "100%", opacity: 0, duration: 1, ease: "power3.out" }, "-=0.5")
+              .from(".feature-title", { x: "100%", opacity: 0, duration: 1, ease: "power3.out" }, "-=0.5")
+              .from(".feature-list li", { x: "100%", opacity: 0, duration: 0.8, stagger: 0.2, ease: "power2.out" }, "-=0.5");
+
+        // Animation for input fields
+        document.querySelectorAll('.input-wrapper').forEach(wrapper => {
+            const input = wrapper.querySelector('input');
+            const path = wrapper.querySelector('.outline-path rect');
+            const pathLength = path.getTotalLength();
+            path.setAttribute('stroke-dasharray', `${pathLength}, ${pathLength}`);
+            path.setAttribute('stroke-dashoffset', pathLength);
+
+            input.addEventListener('mouseenter', () => {
+                gsap.to(path, {
+                    strokeDashoffset: 0,
+                    duration: 2,
+                    ease: "power3.out"
+                });
+            });
+            input.addEventListener('mouseleave', () => {
+                gsap.to(path, {
+                    strokeDashoffset: pathLength,
+                    duration: 0.8,
+                    ease: "power3.out"
+                });
+            });
+        });
+
+        // Animation for the tryitout-container
+        const tryitoutContainer = document.querySelector('.tryitout-container');
+        const containerPath = document.querySelector('.container-outline-path rect');
+        const containerPathLength = containerPath.getTotalLength();
+        containerPath.setAttribute('stroke-dasharray', `${containerPathLength}, ${containerPathLength}`);
+        containerPath.setAttribute('stroke-dashoffset', containerPathLength);
+
+        tryitoutContainer.addEventListener('mouseenter', () => {
+            gsap.to(containerPath, {
+                strokeDashoffset: 0,
+                duration: 2,
+                ease: "power3.out"
+            });
+        });
+        tryitoutContainer.addEventListener('mouseleave', () => {
+            gsap.to(containerPath, {
+                strokeDashoffset: containerPathLength,
+                duration: 0.8,
+                ease: "power3.out"
+            });
+        });
+
+        // GSAP animation for buttons
+        gsap.from(".button-group button", { y: 20, opacity: 0, duration: 0.8, stagger: 0.2, ease: "power2.out" });
+
+        // Fetch video functionality with debug logging
+        document.getElementById('fetch-video-btn').addEventListener('click', async () => {
+            const keyword = document.getElementById('video-input').value;
+            if (!keyword) {
+                alert('Please enter a video idea.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/fetch-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ keyword })
+                });
+
+                const rawText = await response.text();
+                console.log('Raw response from /api/fetch-video:', rawText);
+
+                let data;
+                try {
+                    data = JSON.parse(rawText);
+                } catch (jsonError) {
+                    console.error('JSON Parse Error:', jsonError);
+                    alert('Failed to parse server response. Check the console for details.');
+                    return;
+                }
+
+                if (response.ok) {
+                    const videoSection = document.querySelector('.video-section');
+                    const videoElement = document.getElementById('generated-video');
+                    const downloadLink = document.getElementById('download-video');
+
+                    videoElement.src = data.videoPath;
+                    downloadLink.href = data.videoPath;
+                    downloadLink.download = `${keyword.replace(' ', '_')}.mp4`;
+                    videoSection.style.display = 'block';
+
+                    gsap.from(videoSection, { scale: 0.8, opacity: 0, duration: 1, ease: "elastic.out(1, 0.5)" });
+                } else {
+                    alert(data.message || 'Failed to fetch video.');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('Error fetching video: ' + error.message);
+            }
+        });
+
+        // Clear input functionality
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            document.getElementById('video-input').value = '';
+            const videoSection = document.querySelector('.video-section');
+            videoSection.style.display = 'none';
+        });
+
+        // Logout functionality
+        document.querySelector('.logout').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            alert('Logged out successfully.');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
