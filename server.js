@@ -1,3 +1,14 @@
+//Create a file env.js
+//Create two const vars names JWT_SECRET and PEXELS_API_KEY
+//Provide the keys in "api_key" 
+
+//the en.js should be in the below format
+
+//const JWT_SECRET = "api_placeholder"
+//const PEXELS_API_KEY = "api_placeholder"
+//module.exports =  {JWT_SECRET, PEXELS_API_KEY}
+
+
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
@@ -5,7 +16,8 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const fs = require('fs').promises;
-const { JWT_SECRET, PEXELS_API_KEY } = require("./env.js");
+const { JWT_SECRET, PEXELS_API_KEY } = require("./env.js"); 
+
 
 
 const app = express(); // Ensure app is defined
