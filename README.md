@@ -6,7 +6,7 @@ Prerequisites
 
 Commands to run
 
-1)npm install
+1)npm install (to install the node modules)
 
 2)npm install express
 
