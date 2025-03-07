@@ -23,4 +23,7 @@ const HF_API_TOKEN = "API_PLACEHOLDER";
 
 module.exports =  { JWT_SECRET, PEXELS_API_KEY,HF_API_TOKEN };
 
-4)node server.js
+4)npm install fluent-ffmpeg @ffmpeg-installer/ffmpeg  
+(To install different file formats)
+
+5)node server.js
