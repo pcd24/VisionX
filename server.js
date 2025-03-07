@@ -1,6 +1,7 @@
 // Create a file env.js
 // Create three const vars named JWT_SECRET, PEXELS_API_KEY, HF_API_TOKEN
 // Provide the keys in "api_key"
+//Also create a folder in public named videos so path will look like /public/videos
 
 // The env.js should be in the below format:
 // const JWT_SECRET = "api_placeholder"
