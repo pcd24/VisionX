@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionX - X-Bot</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <img src="pic1.png" alt="VisionX Logo" class="logo-image">
+        <a href="home.html">VisionX</a>
+        <a href="tryitout.html">Try it Out</a>
+        <a href="chatbot.html">X-Bot</a>
+        <a href="#" class="logout">Logout</a>
+    </nav>
+
+    <div class="tryitout-container">
+        <svg class="container-outline-path">
+            <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+        </svg>
+        <h1 class="section-title">X-Bot</h1>
+        <p class="section-subtitle">Chat with our AI assistant powered by Mistral!</p>
+
+        <div class="chatbot-section">
+            <div class="input-section">
+                <label for="chat-input">Ask X-Bot anything:</label>
+                <div class="input-wrapper">
+                    <input type="text" id="chat-input" placeholder="e.g., Tell me about VisionX" required>
+                    <svg class="outline-path">
+                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                    </svg>
+                </div>
+                <div class="button-group">
+                    <button id="send-chat-btn">Send</button>
+                    <button id="clear-chat-btn" class="small-btn">Clear</button>
+                </div>
+            </div>
+            <div class="chatbot-response" id="chat-response" style="display: none;"></div>
+        </div>
+
+        <div class="info-section">
+            <h2 class="info-title">About X-Bot</h2>
+            <p class="info-description">X-Bot is an AI-powered chatbot integrated into VisionX, utilizing the Mistral-7B model from Hugging Face to provide insightful responses to your queries.</p>
+            <h3 class="feature-title">Features</h3>
+            <ul class="feature-list">
+                <li>Engage in natural conversations with AI.</li>
+                <li>Get instant responses to your questions.</li>
+                <li>Seamless integration with VisionX's sleek interface.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to access this page.');
+            window.location.href = 'index.html';
+        }
+
+        // GSAP Animations
+        const tl = gsap.timeline();
+        tl.from(".section-title", { x: "-100%", opacity: 0, duration: 1.2, ease: "power3.out" })
+          .from(".section-subtitle", { y: 20, opacity: 0, duration: 0.8, ease: "power2.out" }, "-=0.5")
+          .from(".chatbot-section", { scale: 0.8, opacity: 0, duration: 1, ease: "elastic.out(1, 0.5)" }, "-=0.5")
+          .from(".info-section", { y: 50, opacity: 0, duration: 1, ease: "power2.out" }, "-=0.5");
+
+        const infoTl = gsap.timeline({ delay: 0.5 });
+        infoTl.from(".info-title", { x: "100%", opacity: 0, duration: 1.2, ease: "power3.out" })
+              .from(".info-description", { x: "100%", opacity: 0, duration: 1, ease: "power3.out" }, "-=0.5")
+              .from(".feature-title", { x: "100%", opacity: 0, duration: 1, ease: "power3.out" }, "-=0.5")
+              .from(".feature-list li", { x: "100%", opacity: 0, duration: 0.8, stagger: 0.2, ease: "power2.out" }, "-=0.5");
+
+        // Input field animation
+        const wrapper = document.querySelector('.input-wrapper');
+        const input = wrapper.querySelector('input');
+        const path = wrapper.querySelector('.outline-path rect');
+        const pathLength = path.getTotalLength();
+        path.setAttribute('stroke-dasharray', `${pathLength}, ${pathLength}`);
+        path.setAttribute('stroke-dashoffset', pathLength);
+
+        input.addEventListener('mouseenter', () => {
+            gsap.to(path, { strokeDashoffset: 0, duration: 2, ease: "power3.out" });
+        });
+        input.addEventListener('mouseleave', () => {
+            gsap.to(path, { strokeDashoffset: pathLength, duration: 0.8, ease: "power3.out" });
+        });
+
+        // Container animation
+        const tryitoutContainer = document.querySelector('.tryitout-container');
+        const containerPath = document.querySelector('.container-outline-path rect');
+        const containerPathLength = containerPath.getTotalLength();
+        containerPath.setAttribute('stroke-dasharray', `${containerPathLength}, ${containerPathLength}`);
+        containerPath.setAttribute('stroke-dashoffset', containerPathLength);
+
+        tryitoutContainer.addEventListener('mouseenter', () => {
+            gsap.to(containerPath, { strokeDashoffset: 0, duration: 2, ease: "power3.out" });
+        });
+        tryitoutContainer.addEventListener('mouseleave', () => {
+            gsap.to(containerPath, { strokeDashoffset: containerPathLength, duration: 0.8, ease: "power3.out" });
+        });
+
+        // Button animations
+        gsap.from(".button-group button", { y: 20, opacity: 0, duration: 0.8, stagger: 0.2, ease: "power2.out" });
+
+        // Chatbot functionality
+        document.getElementById('send-chat-btn').addEventListener('click', async () => {
+            const userInput = document.getElementById('chat-input').value;
+            if (!userInput) {
+                alert('Please enter a question or message.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/chatbot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ userInput })
+                });
+
+                const data = await response.json();
+                const chatResponse = document.getElementById('chat-response');
+
+                if (response.ok) {
+                    chatResponse.textContent = data.response;
+                    chatResponse.style.display = 'block';
+                    gsap.from(chatResponse, { scale: 0.8, opacity: 0, duration: 1, ease: "elastic.out(1, 0.5)" });
+                } else {
+                    chatResponse.textContent = data.message || 'Failed to get a response.';
+                    chatResponse.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Chatbot error:', error);
+                document.getElementById('chat-response').textContent = 'Error: Could not connect to the chatbot.';
+                document.getElementById('chat-response').style.display = 'block';
+            }
+        });
+
+        // Clear chat functionality
+        document.getElementById('clear-chat-btn').addEventListener('click', () => {
+            document.getElementById('chat-input').value = '';
+            const chatResponse = document.getElementById('chat-response');
+            chatResponse.textContent = '';
+            chatResponse.style.display = 'none';
+        });
+        
+
+        // Logout functionality
+        document.querySelector('.logout').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            alert('Logged out successfully.');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

@@ -1,13 +1,12 @@
-//Create a file env.js
-//Create two const vars names JWT_SECRET and PEXELS_API_KEY
-//Provide the keys in "api_key" 
+// Create a file env.js
+// Create three const vars named JWT_SECRET, PEXELS_API_KEY, HF_API_TOKEN
+// Provide the keys in "api_key"
 
-//the en.js should be in the below format
-
-//const JWT_SECRET = "api_placeholder"
-//const PEXELS_API_KEY = "api_placeholder"
-//module.exports =  {JWT_SECRET, PEXELS_API_KEY}
-
+// The env.js should be in the below format:
+// const JWT_SECRET = "api_placeholder"
+// const PEXELS_API_KEY = "api_placeholder"
+// const HF_API_TOKEN = "api_placeholder";
+// module.exports = { JWT_SECRET, PEXELS_API_KEY, HF_API_TOKEN };
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
@@ -16,11 +15,8 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const fs = require('fs').promises;
-const { JWT_SECRET, PEXELS_API_KEY } = require("./env.js"); 
-
-
-
-const app = express(); // Ensure app is defined
+const { JWT_SECRET, PEXELS_API_KEY, HF_API_TOKEN } = require("./env.js");
+const app = express();
 const PORT = 3000;
 
 app.use(express.json());
@@ -163,33 +159,37 @@ app.post('/api/chatbot', authenticateToken, async (req, res) => {
 
     try {
         const API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2";
+        const headers = {
+            "Authorization": `Bearer ${HF_API_TOKEN}`,
+            "Content-Type": "application/json"
+        };
+        const payload = {
+            "inputs": `<s>[INST] ${userInput} [/INST]`,
+            "parameters": {
+                "max_new_tokens": 500,
+                "temperature": 0.7,
+                "top_p": 0.95,
+                "do_sample": true
+            }
+        };
+
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                "Authorization": `Bearer ${HF_API_TOKEN}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                inputs: `<s>[INST] ${userInput} [/INST]`,
-                parameters: {
-                    max_new_tokens: 500,
-                    temperature: 0.7,
-                    top_p: 0.95,
-                    do_sample: true
-                }
-            })
+            headers: headers,
+            body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
-        if (response.ok) {
+        if (response.status === 200) {
+            const data = await response.json();
             const result = data[0].generated_text;
             const answer = result.split("[/INST]")[1].trim();
             res.json({ response: answer });
         } else {
-            res.status(500).json({ message: `Error: ${response.status} - ${data.error || 'Unknown error'}` });
+            const errorText = await response.text();
+            res.status(500).json({ message: `Error: ${response.status} - ${errorText}` });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Error generating response: ' + error.message });
+        res.status(500).json({ message: `Error: ${error.message}` });
     }
 });
 
