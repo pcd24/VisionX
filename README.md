@@ -7,4 +7,6 @@ Prerequisites
 Commands to run
 
 1)npm install
-2)node server.js
+2)npm install express 
+3)create the env.js file find the format in server.js file
+4)node server.js
