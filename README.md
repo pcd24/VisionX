@@ -5,6 +5,7 @@ Prerequisites
     npm (v8.x or higher)
 
 Commands to run in terminal : 
+(Make sure you are in the VisionX-main directory)
 
 1)npm install 
 (to install the node modules)
