@@ -16,7 +16,14 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const fs = require('fs').promises;
+const fsSync = require('fs');
+const path = require('path');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 const { JWT_SECRET, PEXELS_API_KEY, HF_API_TOKEN } = require("./env.js");
+
+ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+
 const app = express();
 const PORT = 3000;
 
@@ -105,13 +112,8 @@ app.post('/api/fetch-video', authenticateToken, async (req, res) => {
             const response = await fetch(url, {
                 headers: { "Authorization": PEXELS_API_KEY }
             });
-            if (!response.ok) {
-                console.error(`Pexels API error: ${response.status} - ${response.statusText}`);
-                throw new Error(`Pexels API error: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error(`Pexels API error: ${response.statusText}`);
             const data = await response.json();
-
-            console.log(`Pexels API response for query "${query}":`, data);
 
             if (data.videos && data.videos.length > 0) {
                 const longestVideo = data.videos.reduce((max, vid) => max.duration > vid.duration ? max : vid);
@@ -124,31 +126,65 @@ app.post('/api/fetch-video', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'No video found for the given keyword.' });
         }
 
-        console.log(`Fetching video from URL: ${videoUrl}`);
-
         const videoPath = `public/videos/${keyword.replace(' ', '_')}.mp4`;
         const videoResponse = await fetch(videoUrl);
-        if (!videoResponse.ok) {
-            throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
-        }
+        if (!videoResponse.ok) throw new Error(`Failed to fetch video: ${videoResponse.statusText}`);
 
         const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
-
-        const videoDir = 'public/videos';
-        try {
-            await fs.mkdir(videoDir, { recursive: true });
-        } catch (err) {
-            console.error('Error creating videos directory:', err);
-            throw new Error('Failed to create videos directory.');
-        }
-
         await fs.writeFile(videoPath, videoBuffer);
-        console.log(`Video saved at: ${videoPath}`);
 
         res.json({ videoPath: `/videos/${keyword.replace(' ', '_')}.mp4` });
     } catch (error) {
         console.error('Error in fetch-video:', error.message);
         res.status(500).json({ message: 'Error fetching video: ' + error.message });
+    }
+});
+
+app.post('/api/download-video', authenticateToken, async (req, res) => {
+    const { videoPath, format } = req.body;
+    if (!videoPath || !format) {
+        return res.status(400).json({ message: 'Video path and format are required.' });
+    }
+
+    const supportedFormats = ['mp4', 'avi', 'webm', 'mkv']; 
+    if (!supportedFormats.includes(format)) {
+        return res.status(400).json({ message: 'Unsupported format. Use mp4, avi, webm, or mkv.' });
+    }
+
+    try {
+        const inputFile = path.join(__dirname, 'public', videoPath.replace(/^\/videos\//, 'videos/'));
+        const outputFormat = format === 'mkv' ? 'matroska' : format; 
+        const outputFile = path.join(__dirname, 'public/videos', `${path.basename(videoPath, '.mp4')}_${format}.${format}`);
+
+        try {
+            await fs.access(inputFile, fsSync.constants.F_OK);
+        } catch (err) {
+            return res.status(404).json({ message: 'Video file not found.' });
+        }
+
+        await new Promise((resolve, reject) => {
+            ffmpeg(inputFile)
+                .outputOptions('-f', outputFormat) 
+                .output(outputFile)
+                .on('end', resolve)
+                .on('error', (err) => reject(new Error('Conversion failed: ' + err.message)))
+                .run();
+        });
+
+        res.download(outputFile, `${path.basename(videoPath, '.mp4')}.${format}`, async (err) => {
+            if (!err) {
+                try {
+                    await fs.unlink(outputFile); 
+                } catch (cleanupErr) {
+                    console.error('Error cleaning up file:', cleanupErr);
+                }
+            } else {
+                console.error('Download error:', err);
+            }
+        });
+    } catch (error) {
+        console.error('Error in download-video:', error);
+        res.status(500).json({ message: 'Error processing download: ' + error.message });
     }
 });
 

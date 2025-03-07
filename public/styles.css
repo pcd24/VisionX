@@ -422,3 +422,30 @@ button:hover {
     position: absolute;
     left: 0;
 }
+
+/* Add to styles.css */
+.download-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.download-group select {
+    padding: 8px;
+    background: #2a2a2a;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.download-group select:hover {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+#download-video-btn {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
