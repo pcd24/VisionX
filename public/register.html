@@ -15,34 +15,34 @@
     </nav>
     <div class="auth-container">
         <svg class="container-outline-path" width="100%" height="100%">
-            <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+            <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" />
         </svg>
         <h2>Register for VisionX</h2>
         <form id="register-form">
             <div class="form-group">
                 <label for="email">Email</label>
-                <div class="textarea-wrapper">
-                    <textarea id="email" name="email" required></textarea>
+                <div class="input-wrapper">
+                    <input type="email" id="email" name="email" required />
                     <svg class="outline-path" width="100%" height="100%">
-                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" />
                     </svg>
                 </div>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <div class="textarea-wrapper">
-                    <textarea id="password" name="password" required></textarea>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" required />
                     <svg class="outline-path" width="100%" height="100%">
-                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" />
                     </svg>
                 </div>
             </div>
             <div class="form-group">
                 <label for="confirm-password">Confirm Password</label>
-                <div class="textarea-wrapper">
-                    <textarea id="confirm-password" name="confirm-password" required></textarea>
+                <div class="input-wrapper">
+                    <input type="password" id="confirm-password" name="confirm-password" required />
                     <svg class="outline-path" width="100%" height="100%">
-                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="0, 1000" />
+                        <rect x="0" y="0" width="100%" height="100%" fill="none" stroke="#ffffff" stroke-width="3" />
                     </svg>
                 </div>
             </div>
@@ -53,24 +53,24 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script>
-        // Animation for textarea inputs
-        document.querySelectorAll('.textarea-wrapper').forEach(wrapper => {
-            const textarea = wrapper.querySelector('textarea');
-            const path = wrapper.querySelector('.outline-path rect');
-            const pathLength = path.getTotalLength();
-            path.setAttribute('stroke-dasharray', `${pathLength}, ${pathLength}`);
-            path.setAttribute('stroke-dashoffset', pathLength);
+        // Animation for input fields
+        document.querySelectorAll('.input-wrapper').forEach(wrapper => {
+            const input = wrapper.querySelector('input');
+            const rect = wrapper.querySelector('.outline-path rect');
+            const perimeter = 2 * (input.offsetWidth + input.offsetHeight); // Calculate rectangle perimeter
+            rect.setAttribute('stroke-dasharray', `${perimeter} ${perimeter}`);
+            rect.setAttribute('stroke-dashoffset', perimeter);
 
-            textarea.addEventListener('mouseenter', () => {
-                gsap.to(path, {
+            input.addEventListener('mouseenter', () => {
+                gsap.to(rect, {
                     strokeDashoffset: 0,
                     duration: 2,
                     ease: "power3.out"
                 });
             });
-            textarea.addEventListener('mouseleave', () => {
-                gsap.to(path, {
-                    strokeDashoffset: pathLength,
+            input.addEventListener('mouseleave', () => {
+                gsap.to(rect, {
+                    strokeDashoffset: perimeter,
                     duration: 0.8,
                     ease: "power3.out"
                 });
@@ -79,44 +79,56 @@
 
         // Animation for the auth-container
         const authContainer = document.querySelector('.auth-container');
-        const containerPath = document.querySelector('.container-outline-path rect');
-        const containerPathLength = containerPath.getTotalLength();
-        containerPath.setAttribute('stroke-dasharray', `${containerPathLength}, ${containerPathLength}`);
-        containerPath.setAttribute('stroke-dashoffset', containerPathLength);
+        const containerRect = document.querySelector('.container-outline-path rect');
+        const containerPerimeter = 2 * (authContainer.offsetWidth + authContainer.offsetHeight);
+        containerRect.setAttribute('stroke-dasharray', `${containerPerimeter} ${containerPerimeter}`);
+        containerRect.setAttribute('stroke-dashoffset', containerPerimeter);
 
         authContainer.addEventListener('mouseenter', () => {
-            gsap.to(containerPath, {
+            gsap.to(containerRect, {
                 strokeDashoffset: 0,
                 duration: 2,
                 ease: "power3.out"
             });
         });
         authContainer.addEventListener('mouseleave', () => {
-            gsap.to(containerPath, {
-                strokeDashoffset: containerPathLength,
+            gsap.to(containerRect, {
+                strokeDashoffset: containerPerimeter,
                 duration: 0.8,
                 ease: "power3.out"
             });
         });
 
+        // Form submission with password validation
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
 
-            const response = await fetch('http://localhost:3000/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, confirmPassword })
-            });
-            const data = await response.json();
+            // Client-side password match check
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
 
-            if (response.ok) {
-                alert(data.message);
-                window.location.href = 'index.html';
-            } else {
-                alert(data.message);
+            try {
+                const response = await fetch('http://localhost:3000/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, confirmPassword })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message);
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.message || "Registration failed!");
+                }
+            } catch (error) {
+                alert("Error connecting to the server. Ensure the backend is running!");
+                console.error(error);
             }
         });
     </script>
